@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Caneth Logistics - Canadian Gateway Multi-Carrier Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Forces sharp industrial look on inputs */
+        input[type="number"], input[type="text"], select { border-radius: 0 !important; }
+    </style>
+</head>
+<body class="bg-zinc-200 font-sans text-slate-900 antialiased p-4 md:p-8">
+
+    <div class="max-w-5xl mx-auto bg-white shadow-2xl border-4 border-slate-900">
+        <div class="bg-slate-900 text-white px-8 py-6 flex flex-col md:flex-row justify-between items-start md:items-center">
+            <div>
+                <h1 class="text-3xl font-black uppercase tracking-tighter text-zinc-100">Caneth Logistics</h1>
+                <p class="text-xs font-bold uppercase tracking-widest text-zinc-400 mt-1">Airfreight Quotation System // Carrier-Specific Tariffs V.3.8</p>
+            </div>
+            <div class="mt-4 md:mt-0 px-3 py-1 bg-amber-400 text-slate-900 font-black text-xs uppercase tracking-widest border-2 border-amber-500 shadow-[2px_2px_0px_#000]">
+                Official Generator
+            </div>
+        </div>
+
+        <form id="bookingForm" class="p-8 space-y-8">
+            <div>
+                <h2 class="text-xs font-black uppercase tracking-widest text-slate-900 border-b-2 border-slate-900 pb-2 mb-4">1. Carrier & Routing Metrics</h2>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Origin Gateway / Region</label>
+                        <select id="origin" required class="w-full px-3 py-2 border-2 border-slate-300 focus:border-slate-900 outline-none font-bold text-sm bg-zinc-50">
+                            <option value="YYZ" selected>TORONTO GATEWAY (YYZ)</option>
+                            <option value="WEST">WESTERN REGION (YVR / YYC / YEG / YWG / YXE)</option>
+                            <option value="YUL">MONTRÉAL GATEWAY (YUL)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Air Carrier</label>
+                        <select id="carrier" required class="w-full px-3 py-2 border-2 border-slate-300 focus:border-slate-900 outline-none font-bold text-xs bg-amber-100 border-amber-400">
+                            <option value="ET" selected>ETHIOPIAN AIRLINES (ET)</option>
+                            <option value="BW">CARIBBEAN AIRLINES (BW)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Dimensions</label>
+                        <select id="dimUnit" class="w-full px-3 py-2 border-2 border-slate-300 focus:border-slate-900 outline-none font-semibold text-xs bg-zinc-50">
+                            <option value="cm" selected>CENTIMETERS (CM)</option>
+                            <option value="in">INCHES (IN)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Weight Unit</label>
+                        <select id="weightUnit" class="w-full px-3 py-2 border-2 border-slate-300 focus:border-slate-900 outline-none font-semibold text-xs bg-zinc-50">
+                            <option value="kg" selected>KILOGRAMS (KG)</option>
+                            <option value="lbs">POUNDS (LBS)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-4 mb-6">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Destination Hub</label>
+                        <select id="destination" required class="w-full px-4 py-2 border-2 border-slate-300 focus:border-slate-900 outline-none font-semibold text-sm bg-zinc-50">
+                        </select>
+                    </div>
+                </div>
+
+                <!-- DYNAMIC ADMIN RATE CONTROLS PANEL -->
+                <div class="border-2 border-slate-900 bg-slate-100 p-4">
+                    <div class="flex justify-between items-center border-b border-slate-300 pb-2 mb-3">
+                        <h3 class="text-xs font-black uppercase tracking-widest text-slate-900 flex items-center gap-1.5">
+                            <span class="w-2 h-2 bg-blue-600 inline-block"></span> Admin Surcharge Controls (<span id="lblCarrierAdminName">Ethiopian Airlines</span>)
+                        </h3>
+                        <span class="text-[10px] font-mono font-bold text-slate-600 uppercase bg-slate-200 px-2 py-0.5 border border-slate-300">Editable Tariff Rates</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-700 uppercase mb-1">Fuel Surcharge ($/kg)</label>
+                            <input type="number" id="rateFuel" value="1.80" min="0" step="0.01" required class="w-full px-2 py-1.5 border-2 border-slate-300 focus:border-slate-900 outline-none font-mono font-bold text-xs bg-white" placeholder="1.80">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-700 uppercase mb-1">Security Rate ($/kg)</label>
+                            <input type="number" id="rateSecurity" value="0.05" min="0" step="0.01" required class="w-full px-2 py-1.5 border-2 border-slate-300 focus:border-slate-900 outline-none font-mono font-bold text-xs bg-white" placeholder="0.05">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-700 uppercase mb-1">NAV CAN Rate ($/kg)</label>
+                            <input type="number" id="rateNavCan" value="0.00" min="0" step="0.01" required class="w-full px-2 py-1.5 border-2 border-slate-300 focus:border-slate-900 outline-none font-mono font-bold text-xs bg-white" placeholder="0.00">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-700 uppercase mb-1">NAV CAN Min ($)</label>
+                            <input type="number" id="minNavCan" value="0.00" min="0" step="1" required class="w-full px-2 py-1.5 border-2 border-slate-300 focus:border-slate-900 outline-none font-mono font-bold text-xs bg-white" placeholder="0.00">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h2 class="text-xs font-black uppercase tracking-widest text-slate-900 border-b-2 border-slate-900 pb-2 mb-4">2. Commodity & Cargo Details</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Commodity Class</label>
+                        <select id="commodity" class="w-full px-4 py-2 border-2 border-slate-300 focus:border-slate-900 outline-none font-semibold text-sm bg-zinc-50">
+                            <option value="GEN" selected>GENERAL CARGO (STANDARD)</option>
+                            <option value="PER">PERISHABLES / TEMP-CONTROL (+15%)</option>
+                            <option value="PEF">PERSONAL EFFECTS (+20%)</option>
+                            <option value="VAL">VALUABLE / HIGH-VALUE CARGO (+30%)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Declared Value (CAD)</label>
+                        <input type="number" id="cargoValue" min="0" step="1" required class="w-full px-4 py-2 border-2 border-slate-300 focus:border-slate-900 outline-none font-bold font-mono text-sm bg-zinc-50" placeholder="0">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Cargo Insurance Options</label>
+                        <select id="insuranceType" class="w-full px-4 py-2 border-2 border-slate-300 focus:border-slate-900 outline-none font-semibold text-sm bg-zinc-50">
+                            <option value="NONE" selected>NONE / SELF-INSURED ($0.00)</option>
+                            <option value="CARRIER">CARRIER STANDARD LIABILITY ($0.00)</option>
+                            <option value="ALL_RISK">CANETH ALL-RISK (0.35% / MIN $50)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Shipper / Account Name</label>
+                        <input type="text" id="clientName" required class="w-full px-4 py-2 border-2 border-slate-300 focus:border-slate-900 outline-none font-semibold text-sm bg-zinc-50" placeholder="Enter Company Name">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 uppercase mb-2">Contact Details</label>
+                        <input type="text" id="clientEmail" required class="w-full px-4 py-2 border-2 border-slate-300 focus:border-slate-900 outline-none font-semibold text-sm bg-zinc-50" placeholder="Email or Phone">
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="flex justify-between items-end border-b-2 border-slate-900 pb-2 mb-4">
+                    <div>
+                        <h2 class="text-xs font-black uppercase tracking-widest text-slate-900">3. Cargo Specifications</h2>
+                        <p id="lblCarrierRestrictionsNote" class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mt-0.5">Max PAX Limit: 120" x 90" x 63" (304.8 x 228.6 x 160 cm)</p>
+                    </div>
+                    <button type="button" id="btnAddPackage" class="bg-slate-900 hover:bg-slate-700 text-white font-bold py-1 px-3 text-xs uppercase tracking-wider cursor-pointer transition-colors">
+                        + Add Piece Group
+                    </button>
+                </div>
+                
+                <div id="packagesContainer" class="space-y-2"></div>
+            </div>
+
+            <div id="quoteResult" class="hidden border-4 border-slate-900 bg-zinc-50 p-6 flex flex-col md:flex-row gap-6">
+                <div class="flex-1 space-y-2 text-xs font-bold uppercase text-slate-600 tracking-wide pr-6 md:border-r-2 border-slate-300">
+                    <h3 class="text-sm font-black text-slate-900 mb-4 tracking-widest border-b-2 border-slate-200 pb-2">Weight & Operational Audit</h3>
+                    <div class="flex justify-between"><span>Origin Region:</span> <span id="lblOriginStatus" class="font-mono text-slate-900 font-bold">TORONTO GATEWAY (YYZ)</span></div>
+                    <div class="flex justify-between"><span>Selected Airline:</span> <span id="lblCarrierStatus" class="font-mono text-slate-900 font-bold">ETHIOPIAN AIRLINES</span></div>
+                    <div class="flex justify-between"><span>Total Package Count:</span> <span id="lblTotalPieces" class="font-mono text-slate-900">0 Pcs</span></div>
+                    <div class="flex justify-between"><span>Volumetric WGT:</span> <span id="lblVolWeight" class="font-mono text-slate-900">0.00 kg</span></div>
+                    <div class="flex justify-between"><span>Physical WGT:</span> <span id="lblPhysWeight" class="font-mono text-slate-900">0.00 kg</span></div>
+                    <div class="flex justify-between pt-2 border-t border-slate-200 mt-2 text-slate-900">
+                        <span>Chargeable WGT:</span> 
+                        <span id="lblChargeableWeight" class="font-mono text-sm bg-amber-300 px-1 border border-amber-500">0.00 kg</span>
+                    </div>
+                    <div class="flex justify-between text-blue-700 pt-2"><span>Applied Base Rate:</span> <span id="lblBaseRatePerKg" class="font-mono text-sm">$0.00/kg</span></div>
+                    <div class="flex justify-between text-slate-900 pt-1"><span>Aircraft Restriction:</span> <span id="lblAircraftStatus" class="font-mono text-xs font-black text-green-700">PAX OK</span></div>
+                </div>
+                
+                <div class="flex-1 space-y-1.5 text-xs font-bold uppercase text-slate-600 tracking-wide font-mono">
+                    <h3 class="text-sm font-black text-slate-900 mb-3 tracking-widest border-b-2 border-slate-200 pb-2 font-sans">Financials (CAD)</h3>
+                    <div class="flex justify-between"><span>Base Freight:</span> <span id="lblBaseCost" class="text-slate-900">0.00</span></div>
+                    <div class="flex justify-between"><span id="lblFuelHeader">Fuel:</span> <span id="lblFuelSurcharge" class="text-slate-900">0.00</span></div>
+                    <div class="flex justify-between"><span id="lblSecurityHeader">Security:</span> <span id="lblSecuritySurcharge" class="text-slate-900">0.00</span></div>
+                    <div class="flex justify-between" id="rowNavCan"><span id="lblNavCanHeader">NAV CAN:</span> <span id="lblNavCanSurcharge" class="text-slate-900">0.00</span></div>
+                    <div class="flex justify-between"><span>Docs Fee (Flat):</span> <span id="lblHandlingFee" class="text-slate-900">$50.00</span></div>
+                    <div class="flex justify-between text-blue-800 font-bold"><span id="lblInsuranceHeader">Cargo Insurance:</span> <span id="lblInsuranceFee">0.00</span></div>
+                    <div class="flex justify-between pt-3 mt-1 border-t-4 border-slate-900 items-end">
+                        <span class="font-black text-slate-900 font-sans">Total</span>
+                        <span id="lblTotal" class="text-2xl font-black text-green-700 tracking-tighter">0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t-2 border-slate-200">
+                <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-black uppercase tracking-widest py-4 px-6 border-b-4 border-black active:border-b-0 active:mt-1 transition-all cursor-pointer">
+                    Generate Official Quotation PDF
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // CARRIER ADMIN SURCHARGE DEFAULTS UPDATED
+        const CARRIER_ADMIN_DEFAULTS = {
+            "ET": { name: "Ethiopian Airlines", fuel: "1.80", security: "0.05", securityMin: 0, navcanRate: "0.00", navcanMin: "0.00" },
+            "BW": { name: "Caribbean Airlines", fuel: "1.20", security: "0.15", securityMin: 15.00, navcanRate: "0.05", navcanMin: "5.00" }
+        };
+
+        // CORRECTED CARRIER-SPECIFIC WAREHOUSE DROP-OFF TERMINALS
+        const GATEWAY_TERMINALS = {
+            "ET": {
+                "YYZ": { 
+                    name: "GTA World Cargo (Ethiopian Airlines Handling)", 
+                    address: "2710 Britannia Road East, Cargo Area #2, Bldg. #7, Door 7, Mississauga, ON L5P 1B2", 
+                    tel: "905-671-4443", 
+                    cutoff: "17:00 hrs", 
+                    days: "Daily (06:00 - 00:00)", 
+                    sublocation: "5502", 
+                    portCode: "0497" 
+                },
+                "WEST": { name: "Western Gateway Cargo Facility (ET Cargo Hub)", address: "Primary Freight Terminal Drop-Off", tel: "1-800-387-4865", cutoff: "17:00 hrs", days: "Mon - Fri", sublocation: "4772", portCode: "0821" },
+                "YUL": { name: "Swissport Cargo Terminal (Ethiopian Handling)", address: "800 Stuart Graham St, Dorval, QC", tel: "514-636-3111", cutoff: "16:00 hrs", days: "Mon - Fri", sublocation: "1820", portCode: "0395" }
+            },
+            "BW": {
+                "YYZ": { 
+                    name: "Swissport Cargo “G” (Caribbean Airlines Handling)", 
+                    address: "6500 Silver Dart Drive, Core G, Mississauga, ON L5P 1B1", 
+                    tel: "905-676-2888", 
+                    cutoff: "15:00 hrs", 
+                    days: "Mon - Fri (06:00 - 22:00) / Sat-Sun (10:00 - 18:00)", 
+                    sublocation: "2901", 
+                    portCode: "0495" 
+                },
+                "WEST": { name: "Air Canada Cargo Western Hub Terminal (BW Handling)", address: "YVR Cargo Terminal - 4840 Miller Rd, Richmond, BC", tel: "1-800-387-4865", cutoff: "15:00 hrs", days: "Mon - Fri", sublocation: "3378", portCode: "0821" },
+                "YUL": { name: "Swissport Cargo Terminal (BW Handling)", address: "800 Stuart Graham St, Dorval, QC", tel: "514-636-3111", cutoff: "15:00 hrs", days: "Mon - Sat", sublocation: "1820", portCode: "0395" }
+            }
+        };
+
+        // CARIBBEAN AIRLINES (BW) UPDATED TARIFF RATES BY GATEWAY
+        const BW_RATES_BY_ORIGIN = {
+            "YYZ": {
+                destinations: {
+                    "ANU": "Antigua (ANU)", "BGI": "Bridgetown (BGI)", "CUR": "Willemstad (CUR)", "GEO": "Georgetown (GEO)",
+                    "GND": "St. George's (GND)", "KIN": "Kingston (KIN)", "MBJ": "Montego Bay (MBJ)", "NAS": "Nassau (NAS)",
+                    "PBM": "Paramaribo (PBM)", "POS": "Port of Spain (POS)", "SLU": "Castries (SLU)", "SXM": "Sint Maarten (SXM)",
+                    "SVD": "Saint Vincent (SVD)", "TAB": "Tobago (TAB)"
+                },
+                rates: {
+                    "ANU": { min: 170, rates: [5.16, 4.80, 4.68, 4.56, 4.44, 4.32] },
+                    "BGI": { min: 150, rates: [4.68, 4.44, 4.32, 4.20, 4.08, 3.96] },
+                    "CUR": { min: 170, rates: [5.40, 5.28, 5.16, 5.04, 4.92, 4.80] },
+                    "GEO": { min: 150, rates: [4.68, 4.44, 4.32, 4.20, 4.08, 3.96] },
+                    "GND": { min: 170, rates: [5.16, 4.80, 4.68, 4.56, 4.44, 4.32] },
+                    "KIN": { min: 140, rates: [4.10, 3.78, 3.68, 3.58, 3.46, 3.36] },
+                    "MBJ": { min: 170, rates: [4.52, 4.20, 4.10, 4.00, 3.88, 3.78] },
+                    "NAS": { min: 170, rates: [4.72, 4.62, 4.52, 4.42, 4.30, 4.20] },
+                    "PBM": { min: 170, rates: [5.40, 5.28, 5.16, 5.04, 4.92, 4.80] },
+                    "POS": { min: 140, rates: [4.10, 3.78, 3.68, 3.58, 3.46, 3.36] },
+                    "SLU": { min: 170, rates: [4.72, 4.62, 4.52, 4.42, 4.30, 4.20] },
+                    "SXM": { min: 170, rates: [5.16, 4.80, 4.68, 4.56, 4.44, 4.32] },
+                    "SVD": { min: 170, rates: [5.40, 5.28, 5.16, 5.04, 4.92, 4.80] },
+                    "TAB": { min: 170, rates: [5.16, 4.80, 4.68, 4.56, 4.44, 4.32] }
+                }
+            },
+            "WEST": {
+                destinations: {
+                    "ANU": "Antigua (ANU)", "BGI": "Bridgetown (BGI)", "CUR": "Willemstad (CUR)", "GEO": "Georgetown (GEO)",
+                    "GND": "St. George's (GND)", "KIN": "Kingston (KIN)", "MBJ": "Montego Bay (MBJ)", "NAS": "Nassau (NAS)",
+                    "PBM": "Paramaribo (PBM)", "POS": "Port of Spain (POS)", "SLU": "Castries (SLU)", "SXM": "Sint Maarten (SXM)",
+                    "SVD": "Saint Vincent (SVD)", "TAB": "Tobago (TAB)"
+                },
+                rates: {
+                    "ANU": { min: 280, rates: [8.46, 8.10, 7.98, 7.86, 7.74, 7.62] },
+                    "BGI": { min: 260, rates: [7.98, 7.74, 7.62, 7.50, 7.38, 7.26] },
+                    "CUR": { min: 280, rates: [8.70, 8.58, 8.46, 8.34, 8.22, 8.10] },
+                    "GEO": { min: 260, rates: [7.98, 7.74, 7.62, 7.50, 7.38, 7.26] },
+                    "GND": { min: 280, rates: [8.46, 8.10, 7.98, 7.86, 7.74, 7.62] },
+                    "KIN": { min: 250, rates: [7.40, 7.08, 6.98, 6.88, 6.76, 6.66] },
+                    "MBJ": { min: 280, rates: [7.82, 7.50, 7.40, 7.30, 7.18, 7.08] },
+                    "NAS": { min: 280, rates: [8.02, 7.92, 7.82, 7.72, 7.60, 7.50] },
+                    "PBM": { min: 280, rates: [8.70, 8.58, 8.46, 8.34, 8.22, 8.10] },
+                    "POS": { min: 250, rates: [7.40, 7.08, 6.98, 6.88, 6.76, 6.66] },
+                    "SLU": { min: 280, rates: [8.02, 7.92, 7.82, 7.72, 7.60, 7.50] },
+                    "SXM": { min: 280, rates: [8.46, 8.10, 7.98, 7.86, 7.74, 7.62] },
+                    "SVD": { min: 280, rates: [8.70, 8.58, 8.46, 8.34, 8.22, 8.10] },
+                    "TAB": { min: 280, rates: [8.46, 8.10, 7.98, 7.86, 7.74, 7.62] }
+                }
+            },
+            "YUL": {
+                destinations: {
+                    "ANU": "Antigua (ANU)", "BGI": "Bridgetown (BGI)", "CUR": "Willemstad (CUR)", "GEO": "Georgetown (GEO)",
+                    "GND": "St. George's (GND)", "KIN": "Kingston (KIN)", "MBJ": "Montego Bay (MBJ)", "NAS": "Nassau (NAS)",
+                    "PBM": "Paramaribo (PBM)", "POS": "Port of Spain (POS)", "SLU": "Castries (SLU)", "SXM": "Sint Maarten (SXM)",
+                    "SVD": "Saint Vincent (SVD)", "TAB": "Tobago (TAB)"
+                },
+                rates: {
+                    "ANU": { min: 436, rates: [10.76, 10.20, 7.48, 5.96, 5.74, 5.52] },
+                    "BGI": { min: 416, rates: [10.28, 9.84, 7.12, 5.60, 5.38, 5.16] },
+                    "CUR": { min: 436, rates: [11.00, 10.68, 7.96, 6.44, 6.22, 6.00] },
+                    "GEO": { min: 416, rates: [10.28, 9.84, 7.12, 5.60, 5.38, 5.16] },
+                    "GND": { min: 436, rates: [10.76, 10.20, 7.48, 5.96, 5.74, 5.52] },
+                    "KIN": { min: 406, rates: [9.70, 9.18, 6.48, 4.98, 4.76, 4.56] },
+                    "MBJ": { min: 436, rates: [10.12, 9.60, 6.90, 5.40, 5.18, 4.98] },
+                    "NAS": { min: 436, rates: [10.32, 10.02, 7.32, 5.82, 5.60, 5.40] },
+                    "PBM": { min: 436, rates: [11.00, 10.68, 7.96, 6.44, 6.22, 6.00] },
+                    "POS": { min: 406, rates: [9.70, 9.18, 6.48, 4.98, 4.76, 4.56] },
+                    "SLU": { min: 436, rates: [10.32, 10.02, 7.32, 5.82, 5.60, 5.40] },
+                    "SXM": { min: 436, rates: [10.76, 10.20, 7.48, 5.96, 5.74, 5.52] },
+                    "SVD": { min: 436, rates: [11.00, 10.68, 7.96, 6.44, 6.22, 6.00] },
+                    "TAB": { min: 436, rates: [10.76, 10.20, 7.48, 5.96, 5.74, 5.52] }
+                }
+            }
+        };
+
+        // ETHIOPIAN AIRLINES (ET) DIRECTORY & DYNAMIC TARIFF RATES BY GATEWAY
+        const ET_DESTINATIONS = {
+            "ABJ": "Abidjan, Ivory Coast (ABJ)", "ABV": "Abuja, Nigeria (ABV)", "ACC": "Accra, Ghana (ACC)", "ADD": "Addis Ababa, Ethiopia (ADD)", "AMD": "Ahmedabad, India (AMD)", "AUH": "Abu Dhabi, UAE (AUH)", "BAH": "Manama, Bahrain (BAH)", "BEW": "Beira, Mozambique (BEW)", "BEY": "Beirut, Lebanon (BEY)", "BJM": "Bujumbura, Burundi (BJM)", "BKK": "Bangkok, Thailand (BKK)", "BKO": "Bamako, Mali (BKO)", "BLR": "Bangalore, India (BLR)", "BLZ": "Blantyre, Malawi (BLZ)", "BOM": "Mumbai, India (BOM)", "BZV": "Brazzaville, Congo (BZV)", "CAI": "Cairo, Egypt (CAI)", "CAN": "Guangzhou, China (CAN)", "CGK": "Jakarta, Indonesia (CGK)", "CKY": "Conakry, Guinea (CKY)", "COO": "Cotonou, Benin (COO)", "CPT": "Cape Town, South Africa (CPT)", "CSX": "Changsha, China (CSX)", "DAC": "Dhaka, Bangladesh (DAC)", "DAR": "Dar es Salaam, Tanzania (DAR)", "DEL": "Delhi, India (DEL)", "DLA": "Douala, Cameroon (DLA)", "DME": "Moscow, Russia (DME)", "DMM": "Dammam, Saudi Arabia (DMM)", "DOH": "Doha, Qatar (DOH)", "DSS": "Dakar, Senegal (DSS)", "DXB": "Dubai, UAE (DXB)", "EBB": "Entebbe, Uganda (EBB)", "ENU": "Enugu, Nigeria (ENU)", "FBM": "Lubumbashi, DRC (FBM)", "FIH": "Kinshasa, DRC (FIH)", "FNA": "Freetown, Sierra Leone (FNA)", "GBE": "Gaborone, Botswana (GBE)", "GOM": "Goma, DRC (GOM)", "GRU": "São Paulo, Brazil (GRU)", "HAH": "Moroni, Comoros (HAH)", "HAN": "Hanoi, Vietnam (HAN)", "HGA": "Hargeisa, Somalia (HGA)", "HKG": "Hong Kong (HKG)", "HRE": "Harare, Zimbabwe (HRE)", "HYD": "Hyderabad, India (HYD)", "ICN": "Seoul, South Korea (ICN)", "IST": "Istanbul, Turkey (IST)", "JED": "Jeddah, Saudi Arabia (JED)", "JIB": "Djibouti (JIB)", "JNB": "Johannesburg, South Africa (JNB)", "JRO": "Kilimanjaro, Tanzania (JRO)", "JUB": "Juba, South Sudan (JUB)", "KAN": "Kano, Nigeria (KAN)", "KGL": "Kigali, Rwanda (KGL)", "KHI": "Karachi, Pakistan (KHI)", "KUL": "Kuala Lumpur, Malaysia (KUL)", "KWI": "Kuwait City, Kuwait (KWI)", "LBV": "Libreville, Gabon (LBV)", "LFW": "Lomé, Togo (LFW)", "LLW": "Lilongwe, Malawi (LLW)", "LOS": "Lagos, Nigeria (LOS)", "LUN": "Lusaka, Zambia (LUN)", "MAA": "Chennai, India (MAA)", "MAD": "Madrid, Spain (MAD)", "MBA": "Mombasa, Kenya (MBA)", "MCT": "Muscat, Oman (MCT)", "MED": "Medina, Saudi Arabia (MED)", "MGQ": "Mogadishu, Somalia (MGQ)", "MNL": "Manila, Philippines (MNL)", "MPM": "Maputo, Mozambique (MPM)", "NBJ": "Luanda, Angola (NBJ)", "NBO": "Nairobi, Kenya (NBO)", "NDJ": "N'Djamena, Chad (NDJ)", "NIM": "Niamey, Niger (NIM)", "NLA": "Ndola, Zambia (NLA)", "NRT": "Chiba/Tokyo, Japan (NRT)", "NSI": "Yaoundé, Cameroon (NSI)", "OPO": "Porto, Portugal (OPO)", "OUA": "Ouagadougou, Burkina Faso (OUA)", "PEK": "Beijing, China (PEK)", "PNR": "Pointe-Noire, Congo (PNR)", "PVG": "Shanghai, China (PVG)", "ROB": "Monrovia, Liberia (ROB)", "RUH": "Riyadh, Saudi Arabia (RUH)", "SEZ": "Mahé, Seychelles (SEZ)", "SHJ": "Sharjah, UAE (SHJ)", "SIN": "Singapore (SIN)", "SSG": "Malabo, Equatorial Guinea (SSG)", "TLV": "Tel Aviv, Israel (TLV)", "TNR": "Antananarivo, Madagascar (TNR)", "VFA": "Victoria Falls, Zimbabwe (VFA)", "WDH": "Windhoek, Namibia (WDH)", "ZNZ": "Zanzibar, Tanzania (ZNZ)"
+        };
+
+        const ET_RATES_BY_ORIGIN = {
+            "YYZ": {
+                "ABJ": { min: 360, rates: [8.78, 8.31, 4.55, 4.20, 3.99, 3.77] }, "ABV": { min: 360, rates: [8.78, 8.31, 3.98, 2.11, 1.99, 1.86] }, "ACC": { min: 360, rates: [8.78, 8.31, 3.78, 3.09, 2.93, 2.70] }, "ADD": { min: 360, rates: [11.78, 10.77, 5.94, 5.14, 4.38, 4.02] }, "AMD": { min: 360, rates: [8.70, 8.19, 3.65, 1.42, 0.95, 0.68] }, "AUH": { min: 360, rates: [8.63, 8.16, 3.65, 1.43, 1.25, 1.08] }, "BAH": { min: 360, rates: [8.40, 7.95, 3.44, 2.28, 2.08, 1.88] }, "BEW": { min: 360, rates: [8.70, 8.19, 3.65, 3.35, 3.15, 2.90] }, "BEY": { min: 360, rates: [8.55, 8.09, 3.58, 1.89, 1.79, 1.67] }, "BJM": { min: 360, rates: [11.18, 10.63, 5.94, 5.11, 4.88, 4.64] }, "BKK": { min: 360, rates: [8.48, 8.02, 3.65, 1.56, 1.40, 1.24] }, "BKO": { min: 360, rates: [11.18, 10.63, 7.29, 6.50, 6.10, 5.78] }, "BLR": { min: 360, rates: [8.70, 8.19, 3.65, 1.42, 0.76, 0.67] }, "BLZ": { min: 360, rates: [11.18, 10.63, 6.62, 6.24, 5.75, 5.40] }, "BOM": { min: 360, rates: [8.70, 8.19, 3.65, 1.42, 0.76, 0.67] }, "BZV": { min: 360, rates: [8.55, 8.09, 4.05, 3.39, 3.20, 3.00] }, "CAI": { min: 360, rates: [8.63, 8.16, 3.65, 1.44, 1.30, 1.16] }, "CAN": { min: 360, rates: [8.63, 8.16, 3.65, 1.43, 1.28, 1.12] }, "CGK": { min: 360, rates: [8.63, 8.16, 3.65, 1.43, 1.28, 1.12] }, "CKY": { min: 360, rates: [8.55, 8.09, 5.31, 5.04, 4.85, 4.16] }, "COO": { min: 360, rates: [8.40, 7.95, 4.40, 3.19, 2.95, 2.77] }, "CPT": { min: 360, rates: [8.63, 8.16, 3.65, 2.67, 2.09, 1.96] }, "CSX": { min: 360, rates: [8.70, 8.19, 3.65, 1.39, 1.21, 1.00] }, "DAC": { min: 360, rates: [8.78, 8.31, 3.78, 1.56, 1.39, 1.19] }, "DAR": { min: 360, rates: [8.78, 8.31, 3.98, 2.83, 2.69, 2.54] }, "DEL": { min: 360, rates: [8.70, 8.19, 3.65, 1.42, 0.76, 0.67] }, "DLA": { min: 360, rates: [8.78, 8.31, 4.14, 3.94, 3.73, 3.53] }, "DME": { min: 360, rates: [8.70, 8.19, 4.32, 3.85, 3.41, 2.88] }, "DMM": { min: 360, rates: [8.40, 7.95, 3.44, 2.46, 2.31, 2.00] }, "DOH": { min: 360, rates: [8.40, 7.95, 3.44, 2.59, 2.39, 1.98] }, "DSS": { min: 360, rates: [8.78, 8.31, 5.12, 4.88, 4.63, 4.39] }, "DXB": { min: 360, rates: [8.40, 7.95, 3.44, 1.24, 1.08, 0.89] }, "EBB": { min: 360, rates: [9.33, 8.85, 4.28, 2.70, 2.56, 2.41] }, "ENU": { min: 360, rates: [9.68, 9.18, 4.59, 4.02, 3.81, 3.61] }, "FBM": { min: 360, rates: [11.18, 10.63, 6.25, 5.95, 5.68, 5.39] }, "FIH": { min: 360, rates: [11.18, 10.63, 6.25, 5.95, 5.68, 5.39] }, "FNA": { min: 360, rates: [8.78, 8.31, 5.06, 4.82, 4.58, 4.32] }, "GBE": { min: 360, rates: [11.18, 10.63, 6.21, 5.86, 5.43, 4.99] }, "GOM": { min: 360, rates: [11.18, 10.63, 6.39, 6.08, 5.80, 5.51] }, "GRU": { min: 360, rates: [8.70, 8.24, 4.06, 3.39, 3.20, 2.88] }, "HAH": { min: 360, rates: [8.70, 8.19, 3.65, 2.68, 2.55, 2.39] }, "HAN": { min: 360, rates: [8.75, 8.16, 3.65, 2.00, 1.68, 1.49] }, "HGA": { min: 360, rates: [11.18, 10.63, 6.89, 6.37, 5.88, 5.40] }, "HKG": { min: 360, rates: [8.63, 8.16, 3.65, 1.43, 1.28, 1.12] }, "HRE": { min: 360, rates: [11.18, 10.63, 6.12, 5.43, 5.18, 4.91] }, "HYD": { min: 360, rates: [8.70, 8.19, 3.65, 1.42, 0.95, 0.68] }, "ICN": { min: 360, rates: [8.63, 8.16, 3.65, 2.68, 1.83, 1.66] }, "IST": { min: 360, rates: [8.70, 8.19, 3.89, 3.47, 3.09, 2.69] }, "JED": { min: 360, rates: [8.70, 8.24, 4.06, 1.86, 1.69, 1.46] }, "JIB": { min: 360, rates: [11.18, 10.63, 5.94, 5.07, 4.81, 4.56] }, "JNB": { min: 360, rates: [8.78, 8.31, 4.25, 3.84, 3.21, 2.94] }, "JRO": { min: 360, rates: [8.78, 8.31, 3.98, 2.83, 2.69, 2.54] }, "JUB": { min: 360, rates: [11.18, 10.63, 6.24, 5.90, 5.61, 5.27] }, "KAN": { min: 360, rates: [8.70, 8.19, 3.78, 3.34, 3.06, 2.64] }, "KGL": { min: 360, rates: [9.68, 9.18, 4.59, 3.97, 3.70, 3.50] }, "KHI": { min: 360, rates: [8.70, 8.19, 3.65, 1.56, 1.19, 1.04] }, "KUL": { min: 360, rates: [8.63, 8.16, 3.65, 1.43, 1.28, 1.12] }, "KWI": { min: 360, rates: [8.40, 7.95, 3.44, 2.48, 1.91, 1.64] }, "LBV": { min: 360, rates: [8.55, 8.09, 3.58, 3.15, 2.91, 2.69] }, "LFW": { min: 360, rates: [8.40, 7.95, 3.52, 3.33, 3.15, 2.96] }, "LLW": { min: 360, rates: [8.78, 8.31, 3.98, 3.84, 3.69, 3.54] }, "LOS": { min: 360, rates: [9.68, 9.18, 4.59, 3.64, 3.45, 3.31] }, "LUN": { min: 360, rates: [9.68, 9.18, 4.59, 4.07, 3.86, 3.65] }, "MAA": { min: 360, rates: [8.70, 8.19, 3.65, 1.42, 0.95, 0.67] }, "MAD": { min: 360, rates: [8.70, 8.19, 3.65, 2.68, 2.41, 2.08] }, "MBA": { min: 360, rates: [8.70, 8.19, 3.65, 2.15, 1.94, 1.69] }, "MCT": { min: 360, rates: [8.78, 8.31, 3.98, 2.98, 2.76, 2.42] }, "MED": { min: 360, rates: [8.55, 8.09, 3.58, 2.52, 2.38, 2.06] }, "MGQ": { min: 360, rates: [11.18, 10.63, 6.47, 6.23, 5.99, 5.75] }, "MNL": { min: 360, rates: [8.63, 8.16, 3.65, 1.43, 1.28, 1.12] }, "MPM": { min: 360, rates: [11.18, 10.63, 5.94, 4.91, 4.69, 4.45] }, "NBJ": { min: 360, rates: [8.78, 8.31, 3.98, 3.60, 3.35, 3.11] }, "NBO": { min: 360, rates: [8.78, 8.31, 3.78, 1.92, 1.79, 1.67] }, "NDJ": { min: 360, rates: [11.18, 10.63, 6.10, 5.66, 5.34, 5.12] }, "NIM": { min: 360, rates: [8.78, 8.31, 4.63, 4.41, 4.18, 3.96] }, "NLA": { min: 360, rates: [11.18, 10.63, 6.39, 6.10, 5.80, 5.52] }, "NRT": { min: 360, rates: [8.63, 8.16, 3.65, 3.09, 2.91, 2.66] }, "NSI": { min: 360, rates: [8.78, 8.31, 4.06, 3.85, 3.65, 3.44] }, "OPO": { min: 360, rates: [8.63, 8.16, 3.65, 2.59, 2.35, 2.08] }, "OUA": { min: 360, rates: [9.33, 8.85, 5.02, 4.78, 4.54, 4.28] }, "PEK": { min: 360, rates: [8.63, 8.16, 3.65, 2.68, 1.35, 1.21] }, "PNR": { min: 360, rates: [8.78, 8.31, 4.14, 3.94, 3.73, 3.53] }, "PVG": { min: 360, rates: [8.70, 8.19, 3.65, 1.96, 1.61, 1.37] }, "ROB": { min: 360, rates: [8.70, 8.24, 4.32, 4.03, 3.75, 3.24] }, "RUH": { min: 360, rates: [8.70, 8.19, 3.65, 2.03, 1.80, 1.55] }, "SEZ": { min: 360, rates: [8.70, 8.19, 3.65, 2.35, 2.20, 2.02] }, "SHJ": { min: 360, rates: [8.63, 8.16, 3.65, 1.43, 1.25, 1.08] }, "SIN": { min: 360, rates: [8.40, 7.95, 3.44, 1.24, 1.09, 0.94] }, "SSG": { min: 360, rates: [8.78, 8.31, 4.40, 4.17, 3.96, 3.74] }, "TLV": { min: 360, rates: [10.43, 9.90, 6.75, 6.23, 5.73, 5.16] }, "TNR": { min: 360, rates: [8.70, 8.19, 3.65, 2.38, 2.20, 1.93] }, "VFA": { min: 360, rates: [8.70, 8.19, 3.65, 1.59, 1.46, 1.31] }, "WDH": { min: 360, rates: [11.18, 10.63, 6.09, 5.75, 5.41, 5.09] }, "ZNZ": { min: 360, rates: [11.18, 10.63, 5.94, 5.36, 4.88, 4.61] }
+            },
+            "YUL": {
+                "ABJ": { min: 516, rates: [12.33, 11.66, 5.97, 4.65, 4.43, 4.19] },
+                "ABV": { min: 516, rates: [12.33, 11.66, 5.39, 2.56, 2.43, 2.28] },
+                "ACC": { min: 516, rates: [12.33, 11.66, 5.18, 3.55, 3.36, 3.12] },
+                "ADD": { min: 516, rates: [15.33, 14.12, 7.34, 5.59, 4.81, 4.44] },
+                "AMD": { min: 516, rates: [12.26, 11.54, 5.05, 1.87, 1.21, 1.10] },
+                "AUH": { min: 516, rates: [12.18, 11.51, 5.05, 1.89, 1.69, 1.50] },
+                "BAH": { min: 516, rates: [11.96, 11.30, 4.85, 2.73, 2.51, 2.30] },
+                "BEW": { min: 516, rates: [12.26, 11.54, 5.05, 3.81, 3.59, 3.32] },
+                "BEY": { min: 516, rates: [12.11, 11.44, 4.98, 2.34, 2.23, 2.09] },
+                "BJM": { min: 516, rates: [14.73, 13.98, 7.34, 5.56, 5.31, 5.06] },
+                "BKK": { min: 516, rates: [12.03, 11.37, 5.05, 2.02, 1.84, 1.66] },
+                "BKO": { min: 516, rates: [14.73, 13.98, 8.71, 6.96, 6.54, 6.20] },
+                "BLR": { min: 516, rates: [12.26, 11.54, 5.05, 1.87, 1.21, 1.09] },
+                "BLZ": { min: 516, rates: [14.73, 13.98, 8.03, 6.70, 6.19, 5.82] },
+                "BOM": { min: 516, rates: [12.26, 11.54, 5.05, 1.87, 1.21, 1.09] },
+                "BZV": { min: 516, rates: [12.11, 11.44, 5.47, 3.85, 3.64, 3.42] },
+                "CAI": { min: 516, rates: [12.18, 11.51, 5.05, 1.90, 1.74, 1.58] },
+                "CAN": { min: 516, rates: [12.18, 11.51, 5.05, 1.89, 1.71, 1.54] },
+                "CGK": { min: 516, rates: [12.18, 11.51, 5.05, 1.89, 1.71, 1.54] },
+                "CKY": { min: 516, rates: [12.11, 11.44, 6.72, 5.50, 5.29, 4.58] },
+                "COO": { min: 516, rates: [11.96, 11.30, 5.82, 3.64, 3.39, 3.19] },
+                "CPT": { min: 516, rates: [12.18, 11.51, 5.05, 3.12, 2.53, 2.38] },
+                "CSX": { min: 516, rates: [12.26, 11.54, 5.05, 1.85, 1.65, 1.42] },
+                "DAC": { min: 516, rates: [12.33, 11.66, 5.18, 2.02, 1.83, 1.61] },
+                "DAR": { min: 516, rates: [12.33, 11.66, 5.39, 3.29, 3.13, 2.96] },
+                "DEL": { min: 516, rates: [12.26, 11.54, 5.05, 1.87, 1.21, 1.09] },
+                "DLA": { min: 516, rates: [12.33, 11.66, 5.56, 4.39, 4.16, 3.95] },
+                "DME": { min: 516, rates: [12.26, 11.54, 5.74, 4.30, 3.85, 3.30] },
+                "DMM": { min: 516, rates: [11.96, 11.30, 4.85, 2.91, 2.75, 2.42] },
+                "DOH": { min: 516, rates: [11.96, 11.30, 4.85, 3.04, 2.83, 2.40] },
+                "DSS": { min: 516, rates: [12.33, 11.66, 6.53, 5.33, 5.06, 4.81] },
+                "DXB": { min: 516, rates: [11.96, 11.30, 4.85, 1.69, 1.51, 1.31] },
+                "EBB": { min: 516, rates: [12.89, 12.20, 5.68, 3.16, 3.00, 2.83] },
+                "ENU": { min: 516, rates: [13.23, 12.53, 6.00, 4.47, 4.25, 4.03] },
+                "FBM": { min: 516, rates: [14.73, 13.98, 7.67, 6.41, 6.11, 5.81] },
+                "FIH": { min: 516, rates: [14.73, 13.98, 7.67, 6.41, 6.11, 5.81] },
+                "FNA": { min: 516, rates: [12.33, 11.66, 6.48, 5.28, 5.01, 4.74] },
+                "GBE": { min: 516, rates: [14.73, 13.98, 7.63, 6.32, 5.86, 5.41] },
+                "GOM": { min: 516, rates: [14.73, 13.98, 7.80, 6.54, 6.24, 5.93] },
+                "GRU": { min: 516, rates: [12.26, 11.59, 5.18, 3.85, 3.64, 3.30] },
+                "HAH": { min: 516, rates: [12.26, 11.54, 5.05, 3.13, 2.99, 2.34] },
+                "HAN": { min: 516, rates: [12.18, 11.51, 5.05, 2.46, 2.11, 1.91] },
+                "HGA": { min: 516, rates: [14.73, 13.98, 8.30, 6.83, 6.31, 5.82] },
+                "HKG": { min: 516, rates: [12.18, 11.51, 5.05, 1.89, 1.71, 1.28] },
+                "HRE": { min: 516, rates: [14.73, 13.98, 7.53, 5.89, 5.61, 5.33] },
+                "HYD": { min: 516, rates: [12.26, 11.54, 5.05, 1.87, 1.21, 1.10] },
+                "ICN": { min: 516, rates: [12.18, 11.51, 5.05, 3.13, 2.26, 2.08] },
+                "IST": { min: 516, rates: [12.26, 11.54, 5.31, 3.93, 3.53, 3.11] },
+                "JED": { min: 516, rates: [12.26, 11.59, 5.18, 2.31, 2.13, 1.88] },
+                "JIB": { min: 516, rates: [14.73, 13.98, 7.34, 5.53, 5.25, 4.98] },
+                "JNB": { min: 516, rates: [12.33, 11.66, 5.67, 4.29, 3.65, 3.36] },
+                "JRO": { min: 516, rates: [12.33, 11.66, 5.39, 3.29, 3.13, 2.96] },
+                "JUB": { min: 516, rates: [14.73, 13.98, 7.65, 6.36, 6.05, 5.69] },
+                "KAN": { min: 516, rates: [12.26, 11.54, 5.20, 3.80, 3.50, 3.06] },
+                "KGL": { min: 516, rates: [13.23, 12.53, 6.01, 4.42, 4.14, 3.92] },
+                "KHI": { min: 516, rates: [12.26, 11.54, 5.05, 2.02, 1.63, 1.46] },
+                "KUL": { min: 516, rates: [12.18, 11.51, 5.05, 1.89, 1.71, 1.54] },
+                "KWI": { min: 516, rates: [11.96, 11.30, 4.85, 2.94, 2.35, 2.06] },
+                "LBV": { min: 516, rates: [12.11, 11.44, 4.98, 3.60, 3.35, 3.11] },
+                "LFW": { min: 516, rates: [11.96, 11.30, 4.94, 3.78, 3.59, 3.38] },
+                "LLW": { min: 516, rates: [12.33, 11.66, 5.40, 4.29, 4.13, 3.96] },
+                "LOS": { min: 516, rates: [13.23, 12.53, 5.99, 4.09, 3.89, 3.73] },
+                "LUN": { min: 516, rates: [13.23, 12.53, 6.00, 4.52, 4.30, 4.07] },
+                "MAA": { min: 516, rates: [12.26, 11.54, 5.05, 1.87, 1.21, 1.09] },
+                "MAD": { min: 516, rates: [12.26, 11.54, 5.05, 3.13, 2.85, 2.50] },
+                "MBA": { min: 516, rates: [12.26, 11.54, 5.05, 2.60, 2.38, 2.11] },
+                "MCT": { min: 516, rates: [12.33, 11.66, 5.39, 3.43, 3.20, 2.84] },
+                "MED": { min: 516, rates: [12.11, 11.44, 4.98, 2.98, 2.81, 2.48] },
+                "MGQ": { min: 516, rates: [14.73, 13.98, 7.88, 6.68, 6.43, 6.17] },
+                "MNL": { min: 516, rates: [12.18, 11.51, 5.05, 1.89, 1.71, 1.54] },
+                "MPM": { min: 516, rates: [14.73, 13.98, 7.44, 5.37, 5.13, 4.87] },
+                "NBJ": { min: 516, rates: [12.33, 11.66, 5.39, 4.06, 3.79, 3.53] },
+                "NBO": { min: 516, rates: [12.33, 11.66, 5.18, 2.38, 2.23, 2.09] },
+                "NDJ": { min: 516, rates: [14.73, 13.98, 7.52, 6.11, 5.78, 5.54] },
+                "NIM": { min: 516, rates: [12.33, 11.66, 6.05, 4.86, 4.61, 4.38] },
+                "NLA": { min: 516, rates: [14.73, 13.98, 7.80, 6.55, 6.24, 5.94] },
+                "NRT": { min: 516, rates: [12.18, 11.51, 5.05, 3.55, 3.35, 3.08] },
+                "NSI": { min: 516, rates: [12.33, 11.66, 5.48, 4.30, 4.09, 3.86] },
+                "OPO": { min: 516, rates: [12.18, 11.51, 5.05, 3.04, 2.79, 2.50] },
+                "OUA": { min: 516, rates: [12.89, 12.20, 6.44, 5.24, 4.98, 4.70] },
+                "PEK": { min: 516, rates: [12.18, 11.51, 5.05, 3.13, 1.79, 1.63] },
+                "PNR": { min: 516, rates: [12.33, 11.66, 5.56, 4.39, 4.16, 3.95] },
+                "PVG": { min: 516, rates: [12.26, 11.54, 5.05, 2.42, 2.05, 1.79] },
+                "ROB": { min: 516, rates: [12.26, 11.59, 5.74, 4.49, 4.19, 3.66] },
+                "RUH": { min: 516, rates: [12.26, 11.54, 5.05, 2.48, 2.24, 1.97] },
+                "SEZ": { min: 516, rates: [12.26, 11.54, 5.05, 2.81, 2.64, 2.44] },
+                "SHJ": { min: 516, rates: [12.18, 11.51, 5.05, 1.89, 1.69, 1.50] },
+                "SIN": { min: 516, rates: [11.96, 11.30, 4.85, 1.69, 1.53, 1.36] },
+                "SSG": { min: 516, rates: [12.33, 11.66, 5.82, 4.63, 4.40, 4.16] },
+                "TLV": { min: 516, rates: [13.98, 13.25, 8.17, 6.68, 6.16, 5.58] },
+                "TNR": { min: 516, rates: [12.26, 11.54, 5.05, 2.83, 2.64, 2.35] },
+                "VFA": { min: 516, rates: [12.26, 11.54, 5.05, 2.04, 1.90, 1.73] },
+                "WDH": { min: 516, rates: [14.73, 13.98, 7.51, 6.20, 5.85, 5.51] },
+                "ZNZ": { min: 516, rates: [14.73, 13.98, 7.44, 5.81, 5.31, 5.03] }
+            },
+            "WEST": {
+                "ABJ": { min: 510, rates: [12.20, 11.54, 7.38, 6.93, 6.61, 6.29] }, "ABV": { min: 510, rates: [12.20, 11.54, 6.13, 5.37, 5.17, 4.96] }, "ACC": { min: 510, rates: [12.20, 11.54, 5.67, 5.35, 5.14, 4.93] }, "ADD": { min: 510, rates: [15.20, 14.01, 8.85, 7.85, 7.14, 6.58] }, "AMD": { min: 510, rates: [12.12, 11.43, 5.51, 3.12, 2.60, 2.30] }, "AUH": { min: 510, rates: [12.05, 11.40, 5.51, 3.13, 2.94, 2.75] }, "BAH": { min: 510, rates: [11.82, 11.19, 5.30, 4.07, 3.85, 3.63] }, "BEW": { min: 510, rates: [12.12, 11.43, 5.51, 5.21, 4.99, 4.73] }, "BEY": { min: 510, rates: [11.97, 11.33, 5.43, 3.63, 3.52, 3.39] }, "BJM": { min: 510, rates: [14.60, 13.87, 8.10, 7.17, 6.92, 6.67] }, "BKK": { min: 510, rates: [11.90, 11.26, 5.51, 3.28, 3.11, 2.93] }, "BKO": { min: 510, rates: [14.60, 13.87, 9.51, 8.68, 8.24, 7.90] }, "BLR": { min: 510, rates: [12.12, 11.43, 5.51, 3.12, 2.40, 2.29] }, "BLZ": { min: 510, rates: [14.60, 13.87, 8.82, 8.40, 7.87, 7.49] }, "BOM": { min: 510, rates: [12.12, 11.43, 5.51, 3.12, 2.40, 2.29] }, "BZV": { min: 510, rates: [11.97, 11.33, 5.92, 5.23, 5.03, 4.81] }, "CAI": { min: 510, rates: [12.05, 11.40, 5.51, 3.14, 2.99, 2.84] }, "CAN": { min: 510, rates: [12.05, 11.40, 5.51, 3.13, 2.97, 2.79] }, "CGK": { min: 510, rates: [12.05, 11.40, 5.51, 3.13, 2.97, 2.79] }, "CKY": { min: 510, rates: [11.97, 11.33, 7.23, 6.97, 6.77, 6.04] }, "COO": { min: 510, rates: [11.82, 11.19, 6.29, 5.01, 4.75, 4.56] }, "CPT": { min: 510, rates: [12.05, 11.40, 5.51, 4.47, 3.84, 3.70] }, "CSX": { min: 510, rates: [12.12, 11.43, 5.51, 3.09, 2.89, 2.66] }, "DAC": { min: 510, rates: [12.20, 11.54, 5.65, 3.28, 3.10, 2.87] }, "DAR": { min: 510, rates: [12.20, 11.54, 5.86, 4.62, 4.47, 4.31] }, "DEL": { min: 510, rates: [12.12, 11.43, 5.51, 3.12, 2.40, 2.29] }, "DLA": { min: 510, rates: [12.20, 11.54, 6.01, 5.81, 5.59, 5.38] }, "DME": { min: 510, rates: [12.12, 11.43, 6.19, 5.71, 5.24, 4.69] }, "DMM": { min: 510, rates: [11.82, 11.19, 5.30, 4.24, 4.08, 3.74] }, "DOH": { min: 510, rates: [11.82, 11.19, 5.30, 4.38, 4.16, 3.72] }, "DSS": { min: 510, rates: [12.20, 11.54, 7.02, 6.78, 6.51, 6.26] }, "DXB": { min: 510, rates: [11.82, 11.19, 5.30, 2.94, 2.76, 2.55] }, "EBB": { min: 510, rates: [12.75, 12.09, 6.16, 4.51, 4.35, 4.19] }, "ENU": { min: 510, rates: [13.10, 12.42, 6.47, 5.89, 5.67, 5.46] }, "FBM": { min: 510, rates: [14.60, 13.87, 8.42, 8.11, 7.82, 7.51] }, "FIH": { min: 510, rates: [14.60, 13.87, 8.42, 8.11, 7.82, 7.51] }, "FNA": { min: 510, rates: [12.20, 11.54, 6.96, 6.71, 6.46, 6.19] }, "GBE": { min: 510, rates: [14.60, 13.87, 8.38, 8.01, 7.55, 7.08] }, "GOM": { min: 510, rates: [14.60, 13.87, 8.57, 8.24, 7.94, 7.64] }, "GRU": { min: 510, rates: [12.12, 11.48, 5.92, 5.23, 5.03, 4.69] }, "HAH": { min: 510, rates: [12.12, 11.43, 5.51, 4.49, 4.35, 4.18] }, "HAN": { min: 510, rates: [12.17, 11.40, 5.51, 3.74, 3.40, 3.19] }, "HGA": { min: 510, rates: [14.60, 13.87, 9.09, 8.54, 8.02, 7.51] }, "HKG": { min: 510, rates: [12.05, 11.40, 5.51, 3.13, 2.97, 2.79] }, "HRE": { min: 510, rates: [14.60, 13.87, 8.27, 7.55, 7.28, 6.99] }, "HYD": { min: 510, rates: [12.12, 11.43, 5.51, 3.30, 2.60, 2.30] }, "ICN": { min: 510, rates: [12.05, 11.40, 5.51, 4.49, 3.56, 3.38] }, "IST": { min: 510, rates: [12.12, 11.43, 5.75, 5.32, 4.92, 4.49] }, "JED": { min: 510, rates: [12.12, 11.48, 5.92, 3.59, 3.41, 3.16] }, "JIB": { min: 510, rates: [14.60, 13.87, 8.10, 7.14, 6.86, 6.59] }, "JNB": { min: 510, rates: [12.20, 11.54, 6.12, 5.70, 5.03, 4.74] }, "JRO": { min: 510, rates: [12.20, 11.54, 5.86, 4.62, 4.47, 4.31] }, "JUB": { min: 510, rates: [14.60, 13.87, 8.41, 8.06, 7.75, 7.39] }, "KAN": { min: 510, rates: [12.12, 11.43, 5.65, 5.18, 4.88, 4.44] }, "KGL": { min: 510, rates: [13.10, 12.42, 6.47, 5.83, 5.55, 5.34] }, "KHI": { min: 510, rates: [13.35, 12.64, 5.51, 3.28, 2.87, 2.70] }, "KUL": { min: 510, rates: [13.28, 12.61, 5.51, 3.13, 2.97, 2.79] }, "KWI": { min: 510, rates: [13.05, 12.40, 5.30, 4.26, 3.65, 3.36] }, "LBV": { min: 510, rates: [13.20, 12.54, 5.43, 4.97, 4.72, 4.49] }, "LFW": { min: 510, rates: [13.05, 12.40, 5.38, 5.17, 4.98, 4.78] }, "LLW": { min: 510, rates: [13.43, 12.76, 5.86, 5.71, 5.55, 5.39] }, "LOS": { min: 510, rates: [14.33, 13.63, 6.47, 5.49, 5.29, 5.14] }, "LUN": { min: 510, rates: [13.10, 12.42, 6.47, 5.99, 5.77, 5.54] }, "MAA": { min: 510, rates: [12.12, 11.43, 5.51, 3.12, 2.60, 2.29] }, "MAD": { min: 510, rates: [12.12, 11.43, 5.51, 4.49, 4.19, 3.84] }, "MBA": { min: 510, rates: [12.12, 11.43, 5.51, 3.93, 3.70, 3.43] }, "MCT": { min: 510, rates: [12.20, 11.54, 5.86, 4.79, 4.56, 4.17] }, "MED": { min: 510, rates: [11.97, 11.33, 5.43, 4.31, 4.16, 3.81] }, "MGQ": { min: 510, rates: [14.60, 13.87, 8.57, 8.32, 8.07, 7.82] }, "MNL": { min: 510, rates: [12.05, 11.40, 5.51, 3.13, 2.97, 2.79] }, "MPM": { min: 510, rates: [14.60, 13.87, 8.10, 6.94, 6.70, 6.45] }, "NBJ": { min: 510, rates: [12.20, 11.54, 5.86, 5.46, 5.20, 4.95] }, "NBO": { min: 510, rates: [12.20, 11.54, 5.65, 3.69, 3.55, 3.41] }, "NDJ": { min: 510, rates: [14.60, 13.87, 8.28, 7.81, 7.46, 7.23] }, "NIM": { min: 510, rates: [12.20, 11.54, 6.52, 6.29, 6.04, 5.81] }, "NLA": { min: 510, rates: [14.60, 13.87, 8.57, 8.26, 7.94, 7.65] }, "NRT": { min: 510, rates: [12.05, 11.40, 5.51, 4.93, 4.74, 4.47] }, "NSI": { min: 510, rates: [12.20, 11.54, 5.93, 5.71, 5.50, 5.28] }, "OPO": { min: 510, rates: [12.05, 11.40, 5.51, 4.39, 4.12, 3.84] }, "OUA": { min: 510, rates: [12.75, 12.09, 6.94, 6.69, 6.44, 6.16] }, "PEK": { min: 510, rates: [13.28, 12.61, 5.51, 4.49, 3.09, 2.93] }, "PNR": { min: 510, rates: [13.43, 12.76, 6.01, 5.81, 5.59, 5.38] }, "PVG": { min: 510, rates: [13.35, 12.64, 5.51, 3.70, 3.32, 3.07] }, "ROB": { min: 510, rates: [13.35, 12.14, 6.19, 5.89, 5.59, 5.04] }, "RUH": { min: 510, rates: [13.35, 12.64, 5.51, 3.77, 3.52, 3.25] }, "SEZ": { min: 510, rates: [13.35, 12.64, 5.51, 4.12, 3.95, 3.75] }, "SHJ": { min: 510, rates: [13.28, 12.61, 5.51, 3.13, 2.94, 2.75] }, "SIN": { min: 510, rates: [13.05, 12.40, 5.30, 2.94, 2.77, 2.60] }, "SSG": { min: 510, rates: [13.43, 12.76, 6.29, 6.05, 5.82, 5.59] }, "TLV": { min: 510, rates: [15.05, 14.30, 8.86, 8.32, 7.79, 7.18] }, "TNR": { min: 510, rates: [13.35, 12.64, 5.51, 4.15, 3.95, 3.66] }, "VFA": { min: 510, rates: [13.35, 12.64, 5.51, 3.30, 3.16, 3.00] }, "WDH": { min: 510, rates: [15.83, 15.08, 8.21, 7.85, 7.49, 7.15] }, "ZNZ": { min: 510, rates: [14.60, 13.87, 8.10, 7.44, 6.94, 6.64] }
+            }
+        };
+
+        const COMMODITY_MULTIPLIERS = {
+            "GEN": { label: "General Cargo", factor: 1.0 },
+            "PER": { label: "Perishables / Temp-Control", factor: 1.15 },
+            "PEF": { label: "Personal Effects", factor: 1.20 },
+            "VAL": { label: "Valuable / High-Value Cargo", factor: 1.30 }
+        };
+
+        // PAX AIRCRAFT LIMITS (STANDARD DEFAULT)
+        const PAX_MAX_INCHES = { l: 120, w: 90, h: 63 };
+        const PAX_MAX_CM = { l: 304.8, w: 228.6, h: 160.0 };
+
+        const form = document.getElementById('bookingForm');
+        const originSelect = document.getElementById('origin');
+        const carrierSelect = document.getElementById('carrier');
+        const destSelect = document.getElementById('destination');
+        const dimUnitSelect = document.getElementById('dimUnit');
+        const weightUnitSelect = document.getElementById('weightUnit');
+        const commoditySelect = document.getElementById('commodity');
+        const insuranceTypeSelect = document.getElementById('insuranceType');
+        const packagesContainer = document.getElementById('packagesContainer');
+        const btnAddPackage = document.getElementById('btnAddPackage');
+        const quoteResult = document.getElementById('quoteResult');
+        const valueInput = document.getElementById('cargoValue');
+        const rateFuelInput = document.getElementById('rateFuel');
+        const rateSecurityInput = document.getElementById('rateSecurity');
+        const rateNavCanInput = document.getElementById('rateNavCan');
+        const minNavCanInput = document.getElementById('minNavCan');
+
+        function fmtCAD(val) {
+            return '$' + val.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function updateAdminDefaults() {
+            const selectedCarrierKey = carrierSelect.value;
+            const carrierDefaults = CARRIER_ADMIN_DEFAULTS[selectedCarrierKey] || CARRIER_ADMIN_DEFAULTS["ET"];
+            
+            document.getElementById('lblCarrierAdminName').innerText = carrierDefaults.name;
+            rateFuelInput.value = carrierDefaults.fuel;
+            rateSecurityInput.value = carrierDefaults.security;
+            rateNavCanInput.value = carrierDefaults.navcanRate;
+            minNavCanInput.value = carrierDefaults.navcanMin;
+
+            const lblNote = document.getElementById('lblCarrierRestrictionsNote');
+            if (selectedCarrierKey === "BW") {
+                lblNote.innerText = "CARIBBEAN AIRLINES NARROW-BODY: DIRECT (POS/KIN/GEO) MAX 100KG / 48\"x40\"x33\" | BEYOND POS MAX 23KG / 24\"x24\"x24\"";
+            } else {
+                lblNote.innerText = "Max PAX Limit: 120\" x 90\" x 63\" (304.8 x 228.6 x 160 cm)";
+            }
+
+            populateDestinationsList();
+        }
+
+        function getActiveCarrierData() {
+            const selectedCarrierKey = carrierSelect.value;
+            const originVal = originSelect.value;
+
+            if (selectedCarrierKey === "BW") {
+                const bwData = BW_RATES_BY_ORIGIN[originVal] || BW_RATES_BY_ORIGIN["YYZ"];
+                return {
+                    name: "Caribbean Airlines",
+                    code: "BW",
+                    destinations: bwData.destinations,
+                    rates: bwData.rates
+                };
+            } else {
+                const etRates = ET_RATES_BY_ORIGIN[originVal] || ET_RATES_BY_ORIGIN["YYZ"];
+                return {
+                    name: "Ethiopian Airlines",
+                    code: "ET",
+                    destinations: ET_DESTINATIONS,
+                    rates: etRates
+                };
+            }
+        }
+
+        function populateDestinationsList() {
+            const carrierObj = getActiveCarrierData();
+            const currentSelection = destSelect.value;
+            
+            destSelect.innerHTML = "";
+
+            if (carrierObj && carrierObj.destinations) {
+                for (const code in carrierObj.destinations) {
+                    const opt = document.createElement('option');
+                    opt.value = code;
+                    opt.innerText = carrierObj.destinations[code];
+                    destSelect.appendChild(opt);
+                }
+            }
+
+            if (carrierObj.destinations && carrierObj.destinations[currentSelection]) {
+                destSelect.value = currentSelection;
+            }
+            calculateQuote();
+        }
+
+        originSelect.addEventListener('change', () => { populateDestinationsList(); });
+        carrierSelect.addEventListener('change', updateAdminDefaults);
+        dimUnitSelect.addEventListener('change', updateLabels);
+        weightUnitSelect.addEventListener('change', updateLabels);
+        destSelect.addEventListener('change', calculateQuote);
+        commoditySelect.addEventListener('change', calculateQuote);
+        insuranceTypeSelect.addEventListener('change', calculateQuote);
+        valueInput.addEventListener('input', calculateQuote);
+        rateFuelInput.addEventListener('input', calculateQuote);
+        rateSecurityInput.addEventListener('input', calculateQuote);
+        rateNavCanInput.addEventListener('input', calculateQuote);
+        minNavCanInput.addEventListener('input', calculateQuote);
+
+        function updateLabels() {
+            const dUnit = dimUnitSelect.value;
+            const wUnit = weightUnitSelect.value;
+            document.querySelectorAll('.element-dim-label').forEach(lbl => {
+                const type = lbl.innerText.split(' ')[0];
+                lbl.innerText = `${type} (${dUnit})`;
+            });
+            document.querySelectorAll('.element-weight-label').forEach(lbl => {
+                lbl.innerText = `Weight (${wUnit})`;
+            });
+            calculateQuote();
+        }
+
+        btnAddPackage.addEventListener('click', () => {
+            const row = document.createElement('div');
+            row.className = "package-row border-2 border-slate-300 bg-zinc-50 p-4 grid grid-cols-2 md:grid-cols-6 gap-3 items-end transition-colors duration-300";
+            row.innerHTML = `
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1">Qty</label>
+                    <input type="number" min="1" value="1" required class="pkg-qty w-full px-3 py-2 border-2 border-slate-300 focus:border-slate-900 outline-none font-mono font-bold text-sm bg-amber-50">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1 element-dim-label">Length (${dimUnitSelect.value})</label>
+                    <input type="number" min="1" required class="pkg-len w-full px-3 py-2 border-2 border-slate-300 focus:border-slate-900 outline-none font-mono text-sm" placeholder="0">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1 element-dim-label">Width (${dimUnitSelect.value})</label>
+                    <input type="number" min="1" required class="pkg-wid w-full px-3 py-2 border-2 border-slate-300 focus:border-slate-900 outline-none font-mono text-sm" placeholder="0">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1 element-dim-label">Height (${dimUnitSelect.value})</label>
+                    <input type="number" min="1" required class="pkg-hei w-full px-3 py-2 border-2 border-slate-300 focus:border-slate-900 outline-none font-mono text-sm" placeholder="0">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-700 mb-1 element-weight-label">Wgt / Pc (${weightUnitSelect.value})</label>
+                    <input type="number" min="0.1" step="0.1" required class="pkg-wgt w-full px-3 py-2 border-2 border-slate-300 focus:border-slate-900 outline-none font-mono text-sm" placeholder="0.0">
+                </div>
+                <div class="col-span-2 md:col-span-1 text-right flex flex-col justify-end items-end">
+                    <span class="pax-warn hidden text-[10px] font-black uppercase text-red-600 bg-red-100 border border-red-300 px-2 py-0.5 mb-2 text-center w-full">Oversized (CAO)</span>
+                    <button type="button" class="btn-remove-pkg text-xs font-black uppercase text-red-600 hover:text-red-800 pb-1 cursor-pointer border-b border-transparent hover:border-red-600">Remove</button>
+                </div>
+            `;
+            packagesContainer.appendChild(row);
+            row.querySelectorAll('input').forEach(input => input.addEventListener('input', calculateQuote));
+            row.querySelector('.btn-remove-pkg').addEventListener('click', () => {
+                row.remove();
+                toggleRemoveButtons();
+                calculateQuote();
+            });
+            toggleRemoveButtons();
+            calculateQuote();
+        });
+
+        function toggleRemoveButtons() {
+            const rows = document.querySelectorAll('.package-row');
+            rows.forEach(row => {
+                const btn = row.querySelector('.btn-remove-pkg');
+                if (rows.length === 1) btn.classList.add('hidden');
+                else btn.classList.remove('hidden');
+            });
+        }
+
+        btnAddPackage.click();
+        populateDestinationsList();
+
+        function generateQuoteNumber() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let result = '';
+            for (let i = 0; i < 4; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return `CANETH-2026-${result}`;
+        }
+
+        function calculateQuote() {
+            const originCode = originSelect.value;
+            const carrierObj = getActiveCarrierData();
+            const selectedCarrierKey = carrierSelect.value;
+            const selectedCode = destSelect.value;
+            const destInfo = carrierObj && carrierObj.rates ? carrierObj.rates[selectedCode] : null;
+            
+            // DYNAMIC CARRIER AND ORIGIN WAREHOUSE TERMINAL LOOKUP
+            const carrierTerminals = GATEWAY_TERMINALS[selectedCarrierKey] || GATEWAY_TERMINALS["ET"];
+            const terminalInfo = carrierTerminals[originCode] || carrierTerminals["YYZ"];
+            
+            const rows = document.querySelectorAll('.package-row');
+
+            const isMetricDim = dimUnitSelect.value === 'cm';
+            const isMetricWgt = weightUnitSelect.value === 'kg';
+            const cargoValue = parseFloat(valueInput.value) || 0;
+            const fuelRate = parseFloat(rateFuelInput.value) || 0;
+            const securityRate = parseFloat(rateSecurityInput.value) || 0;
+            const navCanRate = parseFloat(rateNavCanInput.value) || 0;
+            const navCanMin = parseFloat(minNavCanInput.value) || 0;
+
+            const selectedInsurance = insuranceTypeSelect.value;
+            const commKey = commoditySelect.value;
+            const commInfo = COMMODITY_MULTIPLIERS[commKey] || COMMODITY_MULTIPLIERS["GEN"];
+
+            let totalVolumetricWeightKg = 0;
+            let totalPhysicalWeightKg = 0;
+            let totalPieceCount = 0;
+            let allValid = true;
+            let exceedsPaxLimit = false;
+            let exceedsBwNarrowBodyLimit = false;
+
+            const isCarrierBW = selectedCarrierKey === "BW";
+            const isBWDirectFlight = ["POS", "KIN", "GEO"].includes(selectedCode);
+
+            rows.forEach(row => {
+                let qty = parseInt(row.querySelector('.pkg-qty').value) || 1;
+                let l = parseFloat(row.querySelector('.pkg-len').value) || 0;
+                let w = parseFloat(row.querySelector('.pkg-wid').value) || 0;
+                let h = parseFloat(row.querySelector('.pkg-hei').value) || 0;
+                let weightPerPc = parseFloat(row.querySelector('.pkg-wgt').value) || 0;
+
+                if (qty <= 0 || l <= 0 || w <= 0 || h <= 0 || weightPerPc <= 0) { allValid = false; return; }
+
+                totalPieceCount += qty;
+
+                let checkLInches = isMetricDim ? l / 2.54 : l;
+                let checkWInches = isMetricDim ? w / 2.54 : w;
+                let checkHInches = isMetricDim ? h / 2.54 : h;
+                let checkWgtKg = isMetricWgt ? weightPerPc : weightPerPc * 0.45359237;
+
+                let isPieceOversized = false;
+                let warnMessage = "Oversized (CAO)";
+
+                if (isCarrierBW) {
+                    const sortedInches = [checkLInches, checkWInches, checkHInches].sort((a, b) => b - a);
+                    if (isBWDirectFlight) {
+                        const sortedBWDirectLimits = [48, 40, 33].sort((a, b) => b - a);
+                        if (checkWgtKg > 100 || sortedInches[0] > sortedBWDirectLimits[0] || sortedInches[1] > sortedBWDirectLimits[1] || sortedInches[2] > sortedBWDirectLimits[2]) {
+                            isPieceOversized = true;
+                            exceedsBwNarrowBodyLimit = true;
+                            warnMessage = "BW EXCEEDED (MAX 100KG / 48x40x33\")";
+                        }
+                    } else {
+                        if (checkWgtKg > 23 || checkLInches > 24 || checkWInches > 24 || checkHInches > 24) {
+                            isPieceOversized = true;
+                            exceedsBwNarrowBodyLimit = true;
+                            warnMessage = "BW EXCEEDED (MAX 23KG / 24x24x24\")";
+                        }
+                    }
+                } else {
+                    const limits = isMetricDim ? PAX_MAX_CM : PAX_MAX_INCHES;
+                    const sortedDims = [l, w, h].sort((a, b) => b - a);
+                    const sortedLimits = [limits.l, limits.w, limits.h].sort((a, b) => b - a);
+                    if (sortedDims[0] > sortedLimits[0] || sortedDims[1] > sortedLimits[1] || sortedDims[2] > sortedLimits[2]) {
+                        isPieceOversized = true;
+                        exceedsPaxLimit = true;
+                    }
+                }
+
+                const warnBadge = row.querySelector('.pax-warn');
+
+                if (isPieceOversized) {
+                    warnBadge.innerText = warnMessage;
+                    warnBadge.classList.remove('hidden');
+                    row.classList.remove('bg-zinc-50', 'border-slate-300', 'bg-amber-100', 'border-amber-400');
+                    row.classList.add('bg-red-50', 'border-red-400');
+                } else {
+                    warnBadge.classList.add('hidden');
+                    let checkLCm = isMetricDim ? l : l * 2.54;
+                    let checkWCm = isMetricDim ? w : w * 2.54;
+                    let checkHCm = isMetricDim ? h : h * 2.54;
+
+                    const singleVolWgt = (checkLCm * checkWCm * checkHCm) / 6000;
+
+                    if (singleVolWgt > checkWgtKg) {
+                        row.classList.remove('bg-zinc-50', 'border-slate-300', 'bg-red-50', 'border-red-400');
+                        row.classList.add('bg-amber-100', 'border-amber-400');
+                    } else {
+                        row.classList.remove('bg-amber-100', 'border-amber-400', 'bg-red-50', 'border-red-400');
+                        row.classList.add('bg-zinc-50', 'border-slate-300');
+                    }
+                }
+
+                let checkLCm = isMetricDim ? l : l * 2.54;
+                let checkWCm = isMetricDim ? w : w * 2.54;
+                let checkHCm = isMetricDim ? h : h * 2.54;
+
+                totalVolumetricWeightKg += ((checkLCm * checkWCm * checkHCm) / 6000) * qty;
+                totalPhysicalWeightKg += checkWgtKg * qty;
+            });
+
+            if (allValid && destInfo && rows.length > 0) {
+                const rawWeight = Math.max(totalPhysicalWeightKg, totalVolumetricWeightKg);
+                const totalChargeableWeightKg = Math.ceil(rawWeight * 2) / 2;
+
+                let bracketIndex = 0;
+                if (totalChargeableWeightKg >= 1000) bracketIndex = 5;
+                else if (totalChargeableWeightKg >= 500) bracketIndex = 4;
+                else if (totalChargeableWeightKg >= 300) bracketIndex = 3;
+                else if (totalChargeableWeightKg >= 100) bracketIndex = 2;
+                else if (totalChargeableWeightKg >= 45) bracketIndex = 1;
+
+                const rawBaseRate = destInfo.rates[bracketIndex];
+                const baseRatePerKg = rawBaseRate * commInfo.factor;
+                const calculatedBaseCost = totalChargeableWeightKg * baseRatePerKg;
+                const finalBaseCost = Math.max(destInfo.min, calculatedBaseCost);
+                
+                const fuelSurcharge = totalChargeableWeightKg * fuelRate;
+
+                // CARIBBEAN SECURITY SCREENING WITH MINIMUM FEE SUPPORT
+                let calculatedSecurity = totalChargeableWeightKg * securityRate;
+                const carrierDefaults = CARRIER_ADMIN_DEFAULTS[carrierSelect.value] || {};
+                const securityMin = carrierDefaults.securityMin || 0;
+                const securitySurcharge = Math.max(calculatedSecurity, securityMin);
+
+                // NAV CAN SURCHARGE COMPUTATION
+                let calculatedNavCan = totalChargeableWeightKg * navCanRate;
+                const navCanSurcharge = calculatedNavCan > 0 ? Math.max(calculatedNavCan, navCanMin) : 0;
+
+                // CARGO INSURANCE COMPUTATION
+                let insuranceFeeApplied = 0.00;
+                let insuranceLabel = "Cargo Insurance (None):";
+                if (selectedInsurance === "ALL_RISK") {
+                    insuranceFeeApplied = Math.max(50.00, cargoValue * 0.0035);
+                    insuranceLabel = "Cargo Insurance (All-Risk):";
+                } else if (selectedInsurance === "CARRIER") {
+                    insuranceLabel = "Carrier Liability (Standard):";
+                }
+
+                const totalCost = finalBaseCost + fuelSurcharge + securitySurcharge + navCanSurcharge + 50.00 + insuranceFeeApplied;
+
+                document.getElementById('lblOriginStatus').innerText = originSelect.options[originSelect.selectedIndex].text;
+                document.getElementById('lblCarrierStatus').innerText = carrierObj.name.toUpperCase();
+                document.getElementById('lblTotalPieces').innerText = totalPieceCount + (totalPieceCount === 1 ? ' Piece' : ' Pieces');
+                document.getElementById('lblVolWeight').innerText = totalVolumetricWeightKg.toFixed(2) + ' kg';
+                document.getElementById('lblPhysWeight').innerText = totalPhysicalWeightKg.toFixed(2) + ' kg';
+                document.getElementById('lblChargeableWeight').innerText = totalChargeableWeightKg.toFixed(2) + ' kg';
+                
+                document.getElementById('lblBaseRatePerKg').innerText = '$' + baseRatePerKg.toFixed(2) + '/kg';
+                document.getElementById('lblBaseCost').innerText = fmtCAD(finalBaseCost) + (calculatedBaseCost < destInfo.min ? ' (Min)' : '');
+                
+                document.getElementById('lblFuelHeader').innerText = `Fuel ($${fuelRate.toFixed(2)}/kg):`;
+                document.getElementById('lblFuelSurcharge').innerText = fmtCAD(fuelSurcharge);
+                
+                document.getElementById('lblSecurityHeader').innerText = `Security ($${securityRate.toFixed(2)}/kg):`;
+                document.getElementById('lblSecuritySurcharge').innerText = fmtCAD(securitySurcharge) + (calculatedSecurity < securityMin ? ' (Min)' : '');
+
+                const navCanRow = document.getElementById('rowNavCan');
+                if (navCanSurcharge > 0) {
+                    navCanRow.classList.remove('hidden');
+                    document.getElementById('lblNavCanHeader').innerText = `NAV CAN ($${navCanRate.toFixed(2)}/kg):`;
+                    document.getElementById('lblNavCanSurcharge').innerText = fmtCAD(navCanSurcharge) + (calculatedNavCan < navCanMin ? ' (Min)' : '');
+                } else {
+                    navCanRow.classList.add('hidden');
+                }
+
+                document.getElementById('lblInsuranceHeader').innerText = insuranceLabel;
+                document.getElementById('lblInsuranceFee').innerText = fmtCAD(insuranceFeeApplied);
+                document.getElementById('lblTotal').innerText = fmtCAD(totalCost) + ' CAD';
+
+                const aircraftStatusLbl = document.getElementById('lblAircraftStatus');
+                if (exceedsBwNarrowBodyLimit) {
+                    aircraftStatusLbl.innerText = "REJECTED (EXCEEDS BW NARROW BODY LIMITS)";
+                    aircraftStatusLbl.className = "font-mono text-xs font-black text-red-600 bg-red-100 px-1 border border-red-300";
+                } else if (exceedsPaxLimit) {
+                    aircraftStatusLbl.innerText = "CAO REQUIRED (OVERSIZED)";
+                    aircraftStatusLbl.className = "font-mono text-xs font-black text-red-600 bg-red-100 px-1 border border-red-300";
+                } else {
+                    aircraftStatusLbl.innerText = "PAX OK";
+                    aircraftStatusLbl.className = "font-mono text-xs font-black text-green-700";
+                }
+
+                quoteResult.classList.remove('hidden');
+                return { 
+                    totalVolumetricWeightKg, totalPhysicalWeightKg, totalChargeableWeightKg, 
+                    totalPieceCount, insuranceFeeApplied, totalCost, finalBaseCost, 
+                    fuelSurcharge, securitySurcharge, navCanSurcharge, baseRatePerKg, exceedsPaxLimit, exceedsBwNarrowBodyLimit,
+                    commInfo, fuelRate, securityRate, navCanRate, carrierObj, selectedInsurance, terminalInfo
+                };
+            } else {
+                quoteResult.classList.add('hidden');
+                return null;
+            }
+        }
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const metrics = calculateQuote();
+            if (!metrics) return alert('Please enter complete box metrics.');
+
+            if (metrics.exceedsBwNarrowBodyLimit) {
+                return alert('Cargo piece limits exceeded for Caribbean Airlines narrow-body operations. Please check individual package size and weight.');
+            }
+
+            const quoteNum = generateQuoteNumber();
+            const issueDate = new Date();
+            const expiryDate = new Date();
+            expiryDate.setDate(issueDate.getDate() + 30);
+
+            let packageSummaryRows = "";
+            document.querySelectorAll('.package-row').forEach((row, i) => {
+                const qty = row.querySelector('.pkg-qty').value;
+                const len = row.querySelector('.pkg-len').value;
+                const wid = row.querySelector('.pkg-wid').value;
+                const hei = row.querySelector('.pkg-hei').value;
+                const wgt = row.querySelector('.pkg-wgt').value;
+                
+                packageSummaryRows += `
+                    <tr>
+                        <td style="padding: 8px; font-weight: bold; border-bottom: 1px solid #ccc;">GRP-${String(i+1).padStart(2, '0')}</td>
+                        <td style="padding: 8px; text-align: center; font-weight: bold; border-bottom: 1px solid #ccc; background-color: #f9f9f9;">${qty} Pc${qty > 1 ? 's' : ''}</td>
+                        <td style="padding: 8px; border-bottom: 1px solid #ccc;">${len} x ${wid} x ${hei} ${dimUnitSelect.value}</td>
+                        <td style="padding: 8px; text-align: right; font-family: monospace; border-bottom: 1px solid #ccc;">${wgt} ${weightUnitSelect.value} / pc</td>
+                    </tr>`;
+            });
+
+            let insurancePdfText = "OPTED OUT / NOT INCLUDED";
+            if (metrics.selectedInsurance === "ALL_RISK") insurancePdfText = "INCLUDED (Caneth All-Risk Coverage)";
+            else if (metrics.selectedInsurance === "CARRIER") insurancePdfText = "CARRIER STANDARD LIABILITY (Limited Montreal Convention)";
+
+            let navCanPdfRow = "";
+            if (metrics.navCanSurcharge > 0) {
+                navCanPdfRow = `<div style="display:flex; justify-between; margin-bottom:4px;"><span>NAV CAN Fee ($${metrics.navCanRate.toFixed(2)}/kg):</span> <span>${fmtCAD(metrics.navCanSurcharge)}</span></div>`;
+            }
+
+            const pdfWindow = window.open('', '_blank', 'width=850,height=900');
+            
+            const htmlContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Caneth Quotation - ${quoteNum}</title>
+                    <style>
+                        @page { size: letter; margin: 10mm; }
+                        body { font-family: Arial, sans-serif; color: #0f172a; margin: 0; padding: 20px; background-color: #fff; font-size: 12px; }
+                        .container { max-width: 800px; margin: 0 auto; border: 4px solid #0f172a; padding: 24px; box-sizing: border-box; }
+                        .header { border-bottom: 4px solid #0f172a; padding-bottom: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-end; }
+                        .header h1 { font-size: 26px; font-weight: 900; text-transform: uppercase; margin: 0; letter-spacing: -1px; }
+                        .header h2 { font-size: 12px; font-weight: bold; color: #475569; text-transform: uppercase; margin: 4px 0 0 0; }
+                        .quote-badge { font-size: 16px; font-family: monospace; font-weight: 900; border: 2px solid #0f172a; padding: 4px 8px; background: #f1f5f9; display: inline-block; margin-bottom: 4px; }
+                        .grid-2 { display: flex; gap: 16px; margin-bottom: 20px; }
+                        .grid-2 > div { flex: 1; border: 2px solid #cbd5e1; padding: 12px; background-color: #f8fafc; }
+                        .section-title { font-size: 11px; font-weight: 900; text-transform: uppercase; border-bottom: 2px solid #cbd5e1; padding-bottom: 6px; margin-top: 0; margin-bottom: 10px; letter-spacing: 0.5px; }
+                        .info-row { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 11px; }
+                        .info-label { color: #64748b; font-weight: bold; text-transform: uppercase; }
+                        .info-val { font-weight: 900; color: #0f172a; }
+                        .warehouse-box { border: 2px solid #0f172a; background-color: #fffbeb; padding: 12px; margin-bottom: 20px; }
+                        .warehouse-box h3 { border-bottom-color: #fcd34d; }
+                        table { width: 100%; border-collapse: collapse; border: 2px solid #cbd5e1; margin-bottom: 20px; font-size: 11px; }
+                        th { background-color: #f1f5f9; text-transform: uppercase; font-size: 10px; font-weight: 900; padding: 8px; border-bottom: 2px solid #cbd5e1; text-align: left; }
+                        .totals-box { border: 4px solid #0f172a; display: flex; margin-bottom: 20px; }
+                        .totals-left { flex: 1; padding: 16px; background-color: #f1f5f9; border-right: 4px solid #0f172a; }
+                        .totals-right { flex: 1; padding: 16px; background-color: #fff; }
+                        .grand-total { border-top: 4px solid #0f172a; margin-top: 12px; padding-top: 12px; display: flex; justify-content: space-between; align-items: flex-end; }
+                        .grand-total-val { font-size: 22px; font-weight: 900; font-family: monospace; color: #15803d; }
+                        .notice { border-top: 2px solid #e2e8f0; padding-top: 12px; font-size: 8px; color: #64748b; text-transform: uppercase; font-weight: bold; text-align: justify; line-height: 1.4; }
+                        @media print {
+                            body { padding: 0; }
+                            .container { border: 4px solid #0f172a !important; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <div>
+                                <h1>Caneth Logistics</h1>
+                                <h2>Quotation for Air Freight Cargo on ${metrics.carrierObj.name}</h2>
+                            </div>
+                            <div style="text-align: right;">
+                                <div class="quote-badge">${quoteNum}</div>
+                                <div style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: #64748b;">Issued: ${issueDate.toLocaleDateString()}</div>
+                                <div style="font-size: 10px; font-weight: bold; text-transform: uppercase; color: #dc2626;">Valid Until: ${expiryDate.toLocaleDateString()}</div>
+                            </div>
+                        </div>
+
+                        <div class="grid-2">
+                            <div>
+                                <h3 class="section-title">Routing & Operational Summary</h3>
+                                <div class="info-row"><span class="info-label">Origin Region:</span> <span class="info-val">${originSelect.options[originSelect.selectedIndex].text}</span></div>
+                                <div class="info-row"><span class="info-label">Destination:</span> <span class="info-val">${destSelect.options[destSelect.selectedIndex].text}</span></div>
+                                <div class="info-row"><span class="info-label">Carrier:</span> <span class="info-val">${metrics.carrierObj.name} (${metrics.carrierObj.code})</span></div>
+                                <div class="info-row"><span class="info-label">Total Pieces:</span> <span class="info-val">${metrics.totalPieceCount} Pcs</span></div>
+                                <div class="info-row"><span class="info-label">Aircraft Type:</span> <span class="info-val">${metrics.exceedsPaxLimit ? 'Cargo Aircraft Only (CAO)' : 'Passenger (PAX) Compatible'}</span></div>
+                                <div class="info-row"><span class="info-label">Commodity Class:</span> <span class="info-val">${metrics.commInfo.label}</span></div>
+                                <div class="info-row"><span class="info-label">Cargo Insurance:</span> <span class="info-val">${insurancePdfText}</span></div>
+                            </div>
+                            <div>
+                                <h3 class="section-title">Shipper Information</h3>
+                                <div class="info-row"><span class="info-label">Account:</span> <span class="info-val">${document.getElementById('clientName').value || 'N/A'}</span></div>
+                                <div class="info-row"><span class="info-label">Contact:</span> <span class="info-val">${document.getElementById('clientEmail').value || 'N/A'}</span></div>
+                                <div class="info-row"><span class="info-label">Decl. Value:</span> <span class="info-val" style="font-family: monospace;">${fmtCAD(parseFloat(valueInput.value) || 0)}</span></div>
+                            </div>
+                        </div>
+
+                        <div class="warehouse-box">
+                            <h3 class="section-title">Cargo Drop-Off Warehouse Instructions (${metrics.carrierObj.name} @ ${originSelect.options[originSelect.selectedIndex].text})</h3>
+                            <div style="display: flex; gap: 16px; font-size: 11px;">
+                                <div style="flex: 1;">
+                                    <span style="font-size: 9px; font-weight: bold; color: #64748b; text-transform: uppercase;">Terminal & Address:</span><br>
+                                    <strong>${metrics.terminalInfo ? metrics.terminalInfo.name : 'Terminal Warehouse'}</strong><br>
+                                    ${metrics.terminalInfo ? metrics.terminalInfo.address : 'Airport Gateway Address'}<br>
+                                    Tel: ${metrics.terminalInfo ? metrics.terminalInfo.tel : 'N/A'}
+                                </div>
+                                <div style="flex: 1;">
+                                    <span style="font-size: 9px; font-weight: bold; color: #64748b; text-transform: uppercase;">Hours & Tender Deadlines:</span><br>
+                                    ${metrics.terminalInfo ? metrics.terminalInfo.days : 'Operating Days'}<br>
+                                    Tender Cutoff: <strong style="color: #b91c1c; font-family: monospace;">${metrics.terminalInfo ? metrics.terminalInfo.cutoff : '17:00 hrs'}</strong><br>
+                                    Sublocation: <strong style="font-family: monospace;">${metrics.terminalInfo ? metrics.terminalInfo.sublocation : 'N/A'}</strong> | CBSA Port: <strong style="font-family: monospace;">${metrics.terminalInfo ? metrics.terminalInfo.portCode : 'N/A'}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="section-title" style="background: #e2e8f0; padding: 6px; border: 2px solid #cbd5e1; border-bottom: none; margin: 0;">Cargo Specifications</h3>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th style="border-right: 1px solid #ccc;">Item Group</th>
+                                        <th style="text-align: center; border-right: 1px solid #ccc;">Quantity</th>
+                                        <th style="border-right: 1px solid #ccc;">Dimensions Metric</th>
+                                        <th style="text-align: right;">Physical Weight / Pc</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${packageSummaryRows}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="totals-box">
+                            <div class="totals-left">
+                                <h3 class="section-title">Weight Assessment</h3>
+                                <div class="info-row"><span>Total Quantity:</span> <span style="font-family: monospace;">${metrics.totalPieceCount} Pcs</span></div>
+                                <div class="info-row"><span>Volumetric Weight:</span> <span style="font-family: monospace;">${metrics.totalVolumetricWeightKg.toFixed(2)} kg</span></div>
+                                <div class="info-row"><span>Physical Weight:</span> <span style="font-family: monospace;">${metrics.totalPhysicalWeightKg.toFixed(2)} kg</span></div>
+                                <div class="info-row" style="border-top: 2px solid #cbd5e1; padding-top: 6px; margin-top: 6px; font-weight: bold;">
+                                    <span>CHARGEABLE WGT:</span> 
+                                    <span style="font-family: monospace; background: #fef08a; padding: 2px 4px; border: 1px solid #0f172a;">${metrics.totalChargeableWeightKg.toFixed(2)} kg</span>
+                                </div>
+                                <div class="info-row" style="margin-top: 10px; color: #1e40af; font-weight: bold;">
+                                    <span>APPLIED RATE/KG:</span> 
+                                    <span style="font-family: monospace;">$${metrics.baseRatePerKg.toFixed(2)}/kg</span>
+                                </div>
+                            </div>
+
+                            <div class="totals-right">
+                                <h3 class="section-title">Quotation (CAD)</h3>
+                                <div class="info-row"><span>Base Airfreight:</span> <span style="font-family: monospace;">${fmtCAD(metrics.finalBaseCost)}</span></div>
+                                <div class="info-row"><span>Fuel Surcharge ($${metrics.fuelRate.toFixed(2)}/kg):</span> <span style="font-family: monospace;">${fmtCAD(metrics.fuelSurcharge)}</span></div>
+                                <div class="info-row"><span>Security ($${metrics.securityRate.toFixed(2)}/kg):</span> <span style="font-family: monospace;">${fmtCAD(metrics.securitySurcharge)}</span></div>
+                                ${navCanPdfRow}
+                                <div class="info-row"><span>Documentation Fee:</span> <span style="font-family: monospace;">$50.00</span></div>
+                                <div class="info-row" style="color: #1e40af; font-weight: bold;"><span>Cargo Insurance Premium:</span> <span style="font-family: monospace;">${fmtCAD(metrics.insuranceFeeApplied)}</span></div>
+                                
+                                <div class="grand-total">
+                                    <span style="font-weight: 900; text-transform: uppercase;">Grand Total</span>
+                                    <span class="grand-total-val">${fmtCAD(metrics.totalCost)}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="notice">
+                            <strong>Notice:</strong> This document serves strictly as an estimated quotation from Caneth Logistics based on client-provided dimensions. Final billing remains fully contingent upon official airline screening, dimensional laser verification, acceptance reviews, and physical scale measurements at the terminal.
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `;
+
+            pdfWindow.document.open();
+            pdfWindow.document.write(htmlContent);
+            pdfWindow.document.close();
+
+            pdfWindow.onload = function() {
+                pdfWindow.focus();
+                pdfWindow.print();
+            };
+        });
+    </script>
+</body>
+</html>
